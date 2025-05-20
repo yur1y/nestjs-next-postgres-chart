@@ -1,0 +1,83 @@
+version: "3.8"
+
+services:
+  # traefik:
+  #   image: traefik:v2.10
+  #   command:
+  #     - "--api.insecure=true"
+  #     - "--providers.docker=true"
+  #     - "--providers.docker.exposedbydefault=false"
+  #     - "--entrypoints.web.address=:80"
+  #   ports:
+  #     - "80:80"
+  #     - "8080:8080"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=test
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    tty: true
+    depends_on:
+      - postgres
+    ports:
+      - "5433:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+
+  test-vessel:
+    restart: always
+    build:
+      context: test-vessel
+      args:
+        NODEJS_DOCKER_IMAGE: ${NODEJS_DOCKER_IMAGE}
+        DATABASE_URL: ${DATABASE_URL}
+    # deploy:
+    #   replicas: 4
+    #   update_config:
+    #     parallelism: 1
+    #     delay: 10s
+    #   restart_policy:
+    #     condition: on-failure
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.test-vessel.rule=PathPrefix(`/`)"
+    #   - "traefik.http.services.test-vessel.loadbalancer.server.port=3000"
+
+    volumes:
+      - ./test-vessel:/app
+      - /node_modules
+    ports: # comment this line to use traefik
+      - 3000:3000
+    command: [pnpm, start:dev]
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  client:
+    restart: always
+    build:
+      context: client
+      args:
+        NODEJS_DOCKER_IMAGE: ${NODEJS_DOCKER_IMAGE}
+    volumes:
+      - ./client:/app
+      - /node_modules
+    ports:
+      - 3001:3001
+    command: [pnpm, dev]
+
+volumes:
+  postgres_data:
