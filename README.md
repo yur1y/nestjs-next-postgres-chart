@@ -10,7 +10,7 @@
 
 1. **Clone and Setup:**
 ```bash
-git clone <repository-url> && cd test-vessel
+git clone https://github.com/yur1y/nestjs-next-postgres-chart.git test-vessel && cd test-vessel
 ```
 
 2. **Environment Files:**
