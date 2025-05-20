@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vessel {
+  id         Int        @id @default(autoincrement())
+  imoNo      Int        @unique
+  name       String
+  vesselType Int
+  emissions  Emission[]
+}
+
+model PPReference {
+  id           Int     @id @default(autoincrement())
+  category     String
+  vesselTypeId Int
+  size         String
+  traj         String
+  a            Float
+  b            Float
+  c            Float
+  d            Float
+  e            Float
+}
+
+model Emission {
+  id           Int      @id @default(autoincrement())
+  vesselId     Int
+  logId        BigInt
+  fromUtc      DateTime
+  toUtc        DateTime
+  totT2wco2    Float
+  totW2wco2    Float
+  aerco2T2w    Float
+  aerco2eW2w   Float
+  eeoico2eW2w  Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  vessel       Vessel   @relation(fields: [vesselId], references: [id])
+
+  @@index([toUtc])
+}
